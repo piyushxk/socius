@@ -18,9 +18,38 @@ export const register = async (req, res) => {
 
     const salt = await bcrypt.genSalt();
     const passwordHash = await bcrypt.hash(password, salt);
-  } catch (err) {
 
+    const newUser = new User({
+      firstName,
+      lastName, 
+      email,
+      password: passwordHash,
+      picturePath,
+      friends,
+      location,
+      occupation,
+      viewedProfile: Math.floor(Math.random() * 10000),
+      impressions: Math.floor(Math.random() * 10000)
+    });
+    const savedUser = await newUser.save();
+    res.status(201).json(savedUser);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 }
 
-// 36:00
+/* LOGGING IN */
+export const login = async(req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email: email });
+    if(!user) return res.status(400).json({ msg: "User does not exist." });
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(400).json({ msg: "Invalid credentials." });
+
+  } catch(err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
